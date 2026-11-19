@@ -153,6 +153,12 @@ const Footer = () => {
         </VStack>
       </SimpleGrid>
 
+      <Text fontSize="sm" opacity={0.65} mb={4}>
+        <Link href="https://dawnstudio.app/#manifesto" isExternal _hover={{ opacity: 1, color: 'purple.300' }}>
+          {"Dawn's apps are built by one creator, for himself first and for everyone, free — no ads, no data selling, basics free forever."}
+        </Link>
+      </Text>
+
       <Divider opacity={0.1} mb={3} />
       <Flex alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2}>
         <Text fontSize="xs" opacity={0.5}>
