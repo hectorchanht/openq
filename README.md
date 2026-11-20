@@ -203,3 +203,9 @@ relay's container filesystem was ephemeral). To run your own:
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+## Licence
+
+This software is licensed under the PolyForm Noncommercial License 1.0.0 - see [LICENSE](LICENSE).
+
+Commercial or business use of this software requires the prior written acknowledgement of Dawn Studio.
