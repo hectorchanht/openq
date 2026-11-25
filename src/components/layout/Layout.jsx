@@ -26,6 +26,7 @@ const Layout = ({ children }) => {
 
         {/* <!-- Open Graph / Facebook --> */}
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="OpenQ" />
         <meta property="og:url" content="https://openq.hectorchan.com/" />
         <meta property="og:title" content="OpenQ — the forum in a queue" />
         <meta property="og:description" content="A live question queue for events — the audience upvotes the best to the front. No signup, no app." />

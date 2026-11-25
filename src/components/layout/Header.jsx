@@ -1,5 +1,5 @@
 import { ArrowRightIcon, CloseIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { Box, HStack, IconButton, Input, Text, VStack, useColorMode } from "@chakra-ui/react";
+import { Box, Button, HStack, IconButton, Input, Text, VStack, useColorMode } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { motion } from "framer-motion";
 import { useRouter } from 'next/router';
@@ -127,22 +127,31 @@ const Header = () => {
     onClick={toggleColorMode}
   />;
 
-  const handleEnterShortSecret = (event) => (event.key === 'Enter' && password.length === 0) && setThread();
-  const handleEnterPassword = (event) => {
-    if (event.key !== 'Enter') return;
-    if (password.length >= 8) loginGun(); else setThread();
-  };
-
   const showPassword = username && username.length >= 4;
-  // "privateMode": with an 8+ character password the arrow turns purple and
-  // opens your private page (u/alias) instead of the room. Renamed from the
-  // old "holy" terminology — user-facing copy now says "private page".
+  // "privateMode": with an 8+ character password the submit button turns
+  // purple and opens your private page (u/alias) instead of the room.
+  // Renamed from the old "holy" terminology — user-facing copy now says
+  // "private page".
   const privateMode = password.length >= 8;
 
-  // Joined input group: room-name input with the » button attached at its
-  // right end (search-bar style). The button's -1px overlap + square inner
-  // corners make them read as one control; it can never wrap onto its own
-  // row, which was the mobile shrink-to-fit trigger.
+  // ONE submit path for the room entry: the labelled submit button and
+  // both Enter handlers all land here — never fork this logic.
+  const submitRoomEntry = () => {
+    if (privateMode) loginGun(); else setThread();
+  };
+  const handleEnterShortSecret = (event) => (event.key === 'Enter' && password.length === 0) && submitRoomEntry();
+  const handleEnterPassword = (event) => {
+    if (event.key !== 'Enter') return;
+    submitRoomEntry();
+  };
+
+  // Joined input group: room-name input with the labelled submit button
+  // attached at its right end (search-bar style). The button's -1px
+  // overlap + square inner corners make them read as one control; it can
+  // never wrap onto its own row, which was the mobile shrink-to-fit
+  // trigger. The button carries the action's name in text ("Join the
+  // queue") — an icon-only arrow did not register as the primary action
+  // on phones (QC 2026-11-24), so the label is the affordance.
   const roomEntry = (
     <VStack w="100%" spacing={1.5} align="stretch">
       <HStack spacing={0} w="100%">
@@ -159,7 +168,7 @@ const Header = () => {
           position="relative"
           _focus={{ zIndex: 1 }}
         />
-        <IconButton
+        <Button
           aria-label={privateMode ? 'open your private page' : 'join the queue'}
           title={privateMode
             ? 'Private page: with an 8+ character password this opens your private page (u/your-name) instead of the queue'
@@ -167,21 +176,25 @@ const Header = () => {
           isDisabled={!username.length || !!alertMsg.length}
           variant="solid"
           colorScheme={privateMode ? 'purple' : 'green'}
-          onClick={privateMode ? loginGun : setThread}
-          icon={<ArrowRightIcon />}
+          onClick={submitRoomEntry}
+          rightIcon={<ArrowRightIcon />}
           size="lg"
-          minW="56px"
           minH="48px"
+          px={5}
           borderLeftRadius={0}
           ml="-1px"
           flexShrink={0}
-        />
+          whiteSpace="nowrap"
+          _active={{ transform: 'scale(0.97)' }}
+        >
+          {privateMode ? 'Open private page' : 'Join the queue'}
+        </Button>
       </HStack>
       <Text fontSize="xs" opacity={0.6} px={1} lineHeight="1.5">
         {privateMode ? (
-          <>🔑 <b>Private page mode</b> — the purple arrow opens <b>your private page</b> (u/{username.replace(/ /g, '') || 'your-name'}), not the queue. Clear the password to join the queue instead.</>
+          <>🔑 <b>Private page mode</b> — the purple button opens <b>your private page</b> (u/{username.replace(/ /g, '') || 'your-name'}), not the queue. Clear the password to join the queue instead.</>
         ) : (
-          <>💡 Type a queue name and hit <b>→</b> to join the discussion. No signup, no app.</>
+          <>💡 Type a queue name and tap <b>Join the queue</b> — or hit Enter. No signup, no app.</>
         )}
       </Text>
       {showPassword && (
