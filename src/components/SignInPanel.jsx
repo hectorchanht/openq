@@ -134,7 +134,7 @@ const SignInPanel = () => {
                 size="md"
                 flex={1}
                 minW={0}
-                onKeyDown={(e) => { if (e.key === "Enter" && code.length === 6) submitCode(); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && code.length === 6) submitCode(); }}
               />
               <Button
                 colorScheme="purple"
@@ -164,7 +164,7 @@ const SignInPanel = () => {
                 size="md"
                 flex={1}
                 minW={0}
-                onKeyDown={(e) => { if (e.key === "Enter" && email.includes("@")) sendLink(); }}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && email.includes("@")) sendLink(); }}
               />
               <Button
                 colorScheme="purple"
@@ -213,7 +213,7 @@ const SignInPanel = () => {
           size="md"
           flex={1}
           minW={0}
-          onKeyDown={(e) => { if (e.key === "Enter" && pageName.trim().length >= 2) doClaim(); }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && pageName.trim().length >= 2) doClaim(); }}
         />
         <Button
           colorScheme="purple"

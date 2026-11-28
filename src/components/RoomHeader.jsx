@@ -18,7 +18,6 @@ import {
 import { useAtom } from "jotai";
 import React from "react";
 import { avatarFor, downloadCSV, fmtCountdown, pseudonym, timeAgo } from "../libs/helpers";
-import { track } from "../libs/analytics";
 import {
   approvePending,
   countKeys,
@@ -293,12 +292,10 @@ const RoomHeader = () => {
   if (!meta) return null; // uncreated room — nothing to head
 
   const openPresent = () => {
-    track('present_view_opened');
     window.open(`${window.location.origin}/${thread}?present=1`, '_blank', 'noopener');
   };
 
   const exportCSV = () => {
-    track('queue_exported');
     const rows = [
       ['question', 'author', 'votes', 'status', 'flags', 'asked_at'],
       ...posts.map((p) => {
@@ -414,14 +411,14 @@ const RoomHeader = () => {
               <Input
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') saveTitleDesc(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) saveTitleDesc(); }}
                 placeholder="Queue title — e.g. Town Hall Q&A"
                 maxLength={80}
               />
               <Input
                 value={descDraft}
                 onChange={(e) => setDescDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') saveTitleDesc(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) saveTitleDesc(); }}
                 placeholder="Short description for the audience"
                 maxLength={160}
               />
@@ -513,7 +510,7 @@ const RoomHeader = () => {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) e.target.blur(); }}
             placeholder="🔍 Search questions…"
             size="md"
             minH="44px"
@@ -656,7 +653,7 @@ const RoomHeader = () => {
                   maxW="110px"
                   size="md"
                   aria-label="Votes per person — type any number, 0 means unlimited"
-                  onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) e.target.blur(); }}
                 />
               </HStack>
               <Button
@@ -733,7 +730,7 @@ const RoomHeader = () => {
                   size="sm"
                   fontFamily="mono"
                   minW={0}
-                  onKeyDown={(e) => { if (e.key === 'Enter') doClaimHost(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) doClaimHost(); }}
                 />
                 <Button size="sm" minH="40px" colorScheme="purple" onClick={doClaimHost} isDisabled={!claimDraft.trim()} flexShrink={0}>
                   Claim host

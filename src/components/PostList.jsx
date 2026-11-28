@@ -9,7 +9,6 @@ import { useAtom } from "jotai";
 import React from "react";
 import gun from "../libs/gun";
 import { avatarFor, pseudonym, timeAgo, uniqueKey } from "../libs/helpers";
-import { track } from "../libs/analytics";
 import {
   addReply, countKeys, deleteReply, getVoterId, mergeInto, unmerge,
   useAuthors, useFollowedQuestions, usePosts, usePostStatus, useReplies, useThreadMeta, useVotes,
@@ -273,7 +272,7 @@ const QuestionCard = ({
                       fontSize="sm"
                       minW={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
+                        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
                           e.preventDefault();
                           sendReply();
                         }
@@ -432,7 +431,7 @@ const MergeModal = ({
                 placeholder="Search questions…"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') e.target.blur(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) e.target.blur(); }}
                 size="sm"
               />
               <Text fontSize="xs" opacity={0.65}>
@@ -596,7 +595,6 @@ const PostList = () => {
   const toggleVote = (key) => {
     if (!thread || readOnly) return;
     if (hasVoted(key)) {
-      track('question_upvoted', { upvoted: false });
       gun.get(`t/${thread}/v/${key}`).get(getVoterId()).put(null); // retract vote
     } else {
       if (budgetLimited && spentVotes >= voteBudget) {
@@ -608,7 +606,6 @@ const PostList = () => {
         });
         return;
       }
-      track('question_upvoted', { upvoted: true });
       gun.get(`t/${thread}/v/${key}`).put({ [getVoterId()]: 1 });
     }
   };

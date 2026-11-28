@@ -127,7 +127,8 @@ const AddPost = () => {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    // IME-safe: Enter that confirms a CJK composition must not submit.
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
       e.preventDefault();
       submitValue();
     }

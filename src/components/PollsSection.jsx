@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import { useAtom } from "jotai";
 import React from "react";
 import { timeAgo, uniqueKey } from "../libs/helpers";
-import { track } from "../libs/analytics";
 import {
   createPoll, deletePoll, setPollClosed, usePolls, useThreadMeta, votePoll,
 } from "../libs/hooks";
@@ -61,7 +60,7 @@ export const PollCreateModal = ({ isOpen, onClose, thread }) => {
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') create(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) create(); }}
               placeholder="Poll question — e.g. Which topic next?"
               maxLength={140}
               autoFocus
@@ -128,7 +127,6 @@ const PollCard = ({ thread, poll, isHost, readOnly }) => {
 
   const doVote = (idx) => {
     if (readOnly || poll.closed) return;
-    track('poll_voted', { changed: votedIdx != null });
     votePoll(thread, poll.id, idx);
   };
 

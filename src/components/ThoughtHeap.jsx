@@ -43,7 +43,7 @@ const HeapItem = ({ item, onPromote, onUpdate, onDelete }) => {
           <Textarea
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(); } }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); saveEdit(); } }}
             rows={3}
             fontSize="md"
             minW={0}
@@ -112,7 +112,7 @@ const ThoughtHeapButton = () => {
   // Refresh from localStorage every time the drawer opens (heap can change
   // across tabs) and after any mutation.
   const refresh = React.useCallback(() => {
-    setItems(loadHeap().slice().sort((a, b) => b.createdAt - a.createdAt));
+    setItems(loadHeap().toSorted((a, b) => b.createdAt - a.createdAt));
   }, []);
   React.useEffect(() => {
     if (isOpen) refresh();
@@ -218,7 +218,7 @@ const ThoughtHeapButton = () => {
                   ref={captureRef}
                   value={capture}
                   onChange={(e) => setCapture(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') park(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) park(); }}
                   placeholder={thread ? `Park a thought for “${thread}”…` : 'Park a thought…'}
                   size="md"
                   flex={1}
