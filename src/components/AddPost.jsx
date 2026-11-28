@@ -4,7 +4,6 @@ import { useAtom } from "jotai";
 import React from 'react';
 import gun from '../libs/gun';
 import { findSimilarPost } from '../libs/helpers';
-import { track } from '../libs/analytics';
 import { getVoterId, usePosts, useThreadMeta } from '../libs/hooks';
 import { aliasAtom, heapDraftAtom, threadIdAtom } from "../libs/jotaiAtoms";
 
@@ -91,7 +90,9 @@ const AddPost = () => {
 
     const key = postKey();
     if (alias) {
-      gun.user().get(path).put({ [key]: text });
+      // Own private page — ownership is the email claim; posts go to the
+      // plain u/<alias> graph node (Gun user accounts are retired).
+      gun.get(path).put({ [key]: text });
     } else if (thread && moderated) {
       // Pre-moderation on: audience posts go to the pending queue instead of
       // the visible node. Author id is still recorded (a/<key>) for the host.
@@ -109,12 +110,6 @@ const AddPost = () => {
     if (thread && typeof window !== 'undefined') {
       window.localStorage.setItem(`rg_lastpost_${thread}`, String(Date.now()));
     }
-    // Analytics: event + context only — never the question text.
-    track('question_asked', {
-      in_room: !!thread,
-      moderated,
-      anonymous: !alias,
-    });
     setValue('');
     if (thread) {
       if (moderated) {

@@ -222,7 +222,10 @@ export const usePosts = (thread, alias) => {
   );
   React.useEffect(() => {
     setPosts([]);
-    const node = alias ? gun.user().get(path) : gun.get(path);
+    // Private pages (u/<alias>) live on the plain graph node now: page
+    // ownership is the server-side email claim (see SignInPanel), not a
+    // Gun user keypair — Gun accounts are gone.
+    const node = gun.get(path);
     node.on((d) => setPosts(parsePosts(d) || []));
     return () => node.off();
   }, [path, alias]);

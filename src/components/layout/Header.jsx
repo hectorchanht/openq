@@ -1,17 +1,14 @@
 import { ArrowRightIcon, CloseIcon, MoonIcon, SunIcon } from "@chakra-ui/icons";
-import { Box, Button, HStack, IconButton, Input, Text, VStack, useColorMode } from "@chakra-ui/react";
+import { Box, HStack, IconButton, Input, Text, VStack, useColorMode } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { motion } from "framer-motion";
 import { useRouter } from 'next/router';
 import React from "react";
-import gun from "../../libs/gun";
 import { useFocus, useRelayOfflineConfirmed } from "../../libs/hooks";
-import { track } from "../../libs/analytics";
 import { alertMsgAtom, aliasAtom, threadIdAtom } from "../../libs/jotaiAtoms";
 import Logo, { LogoMark } from "../Logo";
+import SignInPanel from "../SignInPanel";
 import ThoughtHeapButton from "../ThoughtHeap";
-
-const defaultUser = { username: '', password: '' };
 
 // Relay status: silent when healthy — the green dot was always on, pure
 // noise. Only speaks up on CONFIRMED failure (offline for 5s+): a pulsing
@@ -39,27 +36,24 @@ const RelayStatus = () => {
 
 const Header = () => {
   const router = useRouter();
-  const [_, setAliasAtom] = useAtom(aliasAtom);
+  const [alias, setAliasAtom] = useAtom(aliasAtom);
   const [alertMsg, setAlertMsg] = useAtom(alertMsgAtom);
   const [thread, setThreadIdAtom] = useAtom(threadIdAtom);
 
   const { toggleColorMode, colorMode } = useColorMode();
-  const [{ username, password }, setUser] = React.useState(defaultUser);
+  const [username, setUsernameState] = React.useState('');
   const [usernameRef, setInputUsernameFocus] = useFocus()
 
   React.useEffect(() => {
     setInputUsernameFocus();
   }, [setInputUsernameFocus]);
 
-  const setThread = () => {
-    // Queue name itself is user content — never sent to analytics.
-    track('queue_joined');
-    setThreadIdAtom(username.replace(/ /g, ''));
-  };
+  const setThread = () => setThreadIdAtom(username.replace(/ /g, ''));
   const exitThread = React.useCallback(() => {
     setThreadIdAtom('');
-    setUser(d => ({ ...d, username: '' }));
-  }, [setThreadIdAtom]);
+    setAliasAtom('');
+    setUsernameState('');
+  }, [setThreadIdAtom, setAliasAtom]);
 
   React.useEffect(() => {
     function handleKeyDown(e) {
@@ -84,40 +78,7 @@ const Header = () => {
     }
   }, [router.asPath, setThreadIdAtom]);
 
-  const setUsername = (e) => setUser((d) => ({ ...d, username: e.target.value }));
-  const setPassword = (e) => setUser((d) => ({ ...d, password: e.target.value }));
-  const transErrMsg = (msg) => msg.toLowerCase().replace('User', 'Secret').replace('user', 'secret').replace('created', 'taken');
-
-  const registerGun = () => {
-    gun.user().create(username.replace(/ /g, ''), password.replace(/ /g, ''), (d) => {
-      if (d.err) {
-        setAlertMsg(transErrMsg(d.err));
-      } else {
-        setAliasAtom(username)
-        setUser(dd => ({ ...dd, ...d }))
-        setAlertMsg("");
-      }
-    });
-  };
-
-  const loginGun = () => {
-    gun.user().auth(username.replace(/ /g, ''), password.replace(/ /g, ''), (d) => {
-      if (d.err) {
-        registerGun();
-        // setAlertMsg(transErrMsg(d.err));
-      } else {
-        setAliasAtom(username)
-        setUser(dd => ({ ...dd, ...d }))
-        setAlertMsg("");
-      }
-    });
-  };
-
-  const logout = () => {
-    gun.user().leave();
-    setUser(defaultUser);
-    setAliasAtom('');
-  };
+  const setUsername = (e) => setUsernameState(e.target.value);
 
   const ToggleColor = () => <IconButton
     variant={"ghost"}
@@ -127,31 +88,12 @@ const Header = () => {
     onClick={toggleColorMode}
   />;
 
-  const showPassword = username && username.length >= 4;
-  // "privateMode": with an 8+ character password the submit button turns
-  // purple and opens your private page (u/alias) instead of the room.
-  // Renamed from the old "holy" terminology — user-facing copy now says
-  // "private page".
-  const privateMode = password.length >= 8;
+  const handleEnterShortSecret = (event) => event.key === 'Enter' && setThread();
 
-  // ONE submit path for the room entry: the labelled submit button and
-  // both Enter handlers all land here — never fork this logic.
-  const submitRoomEntry = () => {
-    if (privateMode) loginGun(); else setThread();
-  };
-  const handleEnterShortSecret = (event) => (event.key === 'Enter' && password.length === 0) && submitRoomEntry();
-  const handleEnterPassword = (event) => {
-    if (event.key !== 'Enter') return;
-    submitRoomEntry();
-  };
-
-  // Joined input group: room-name input with the labelled submit button
-  // attached at its right end (search-bar style). The button's -1px
-  // overlap + square inner corners make them read as one control; it can
-  // never wrap onto its own row, which was the mobile shrink-to-fit
-  // trigger. The button carries the action's name in text ("Join the
-  // queue") — an icon-only arrow did not register as the primary action
-  // on phones (QC 2026-11-24), so the label is the affordance.
+  // Joined input group: room-name input with the » button attached at its
+  // right end (search-bar style). The button's -1px overlap + square inner
+  // corners make them read as one control; it can never wrap onto its own
+  // row, which was the mobile shrink-to-fit trigger.
   const roomEntry = (
     <VStack w="100%" spacing={1.5} align="stretch">
       <HStack spacing={0} w="100%">
@@ -168,51 +110,31 @@ const Header = () => {
           position="relative"
           _focus={{ zIndex: 1 }}
         />
-        <Button
-          aria-label={privateMode ? 'open your private page' : 'join the queue'}
-          title={privateMode
-            ? 'Private page: with an 8+ character password this opens your private page (u/your-name) instead of the queue'
-            : 'Join the queue — no signup needed'}
+        <IconButton
+          aria-label="join the queue"
+          title="Join the queue — no signup needed"
           isDisabled={!username.length || !!alertMsg.length}
           variant="solid"
-          colorScheme={privateMode ? 'purple' : 'green'}
-          onClick={submitRoomEntry}
-          rightIcon={<ArrowRightIcon />}
+          colorScheme="green"
+          onClick={setThread}
+          icon={<ArrowRightIcon />}
           size="lg"
+          minW="56px"
           minH="48px"
-          px={5}
           borderLeftRadius={0}
           ml="-1px"
           flexShrink={0}
-          whiteSpace="nowrap"
-          _active={{ transform: 'scale(0.97)' }}
-        >
-          {privateMode ? 'Open private page' : 'Join the queue'}
-        </Button>
+        />
       </HStack>
       <Text fontSize="xs" opacity={0.6} px={1} lineHeight="1.5">
-        {privateMode ? (
-          <>🔑 <b>Private page mode</b> — the purple button opens <b>your private page</b> (u/{username.replace(/ /g, '') || 'your-name'}), not the queue. Clear the password to join the queue instead.</>
-        ) : (
-          <>💡 Type a queue name and tap <b>Join the queue</b> — or hit Enter. No signup, no app.</>
-        )}
+        💡 Type a queue name and hit <b>→</b> to join the discussion. No signup, no app.
       </Text>
-      {showPassword && (
-        <Input
-          value={password}
-          onChange={setPassword}
-          onKeyDown={handleEnterPassword}
-          placeholder="Optional password (8+ characters)"
-          type="password"
-          size="md"
-          w="100%"
-          minW={0}
-        />
-      )}
     </VStack>
   );
 
-  const loggedIn = !!gun.user().is;
+  // On your private page (alias set by the sign-in panel) the header
+  // collapses exactly like it does inside a queue.
+  const onOwnPage = !!alias;
 
   // In a room (or on your private page) the header collapses to ONE slim
   // row of controls only. The room name no longer lives up here — it gets
@@ -221,7 +143,7 @@ const Header = () => {
   const compactBar = (
     <HStack spacing={1} w="100%" alignItems="center" justifyContent="space-between">
       <Box onClick={exitThread} cursor="pointer" flexShrink={0} lineHeight={0}
-        aria-label="back to home" title={thread && !loggedIn ? `Back to home (queue: ${thread})` : "Back to home"}>
+        aria-label="back to home" title={thread ? `Back to home (queue: ${thread})` : "Back to home"}>
         <LogoMark size={26} />
       </Box>
       <HStack spacing={0} alignItems="center">
@@ -230,10 +152,10 @@ const Header = () => {
         <ToggleColor />
         <IconButton
           variant="ghost"
-          onClick={loggedIn ? logout : exitThread}
+          onClick={exitThread}
           color="red.400"
           icon={<CloseIcon />}
-          aria-label={loggedIn ? "log out" : "exit queue"}
+          aria-label={onOwnPage ? "leave page" : "exit queue"}
           flexShrink={0}
         />
       </HStack>
@@ -245,11 +167,11 @@ const Header = () => {
       <VStack
         layerStyle="glass"
         borderRadius="2xl"
-        p={loggedIn || thread ? 2 : 3}
+        p={onOwnPage || thread ? 2 : 3}
         spacing={3}
         align="stretch"
       >
-        {loggedIn || thread ? compactBar : (
+        {onOwnPage || thread ? compactBar : (
           <>
             {/* Row 1: brand lockup left, status controls right */}
             <HStack justifyContent="space-between" alignItems="center" w="100%" spacing={2}>
@@ -262,6 +184,8 @@ const Header = () => {
             </HStack>
             {/* Row 2: room entry */}
             {roomEntry}
+            {/* Row 3: email sign-in + private page ownership */}
+            <SignInPanel />
           </>
         )}
       </VStack>

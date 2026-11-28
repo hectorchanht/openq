@@ -13,9 +13,34 @@ database, in 3 levels:
 1. **Public landing page** — anything goes, visible to everyone.
 2. **A queue** — type a queue name and hit the green arrow
    (or visit `/queue-name`) to join a queue only people with the name can find.
-3. **A private page** — type a name + a `password`
-   (8+ chars) and hit the purple arrow. First login creates the account;
-   it opens your own private page. Press `Esc` to leave a queue.
+3. **A private page** — sign in with your email (link + 6-digit code,
+   see Auth below) and claim a page name. It opens your own private
+   page, `u/<name>`. Press `Esc` to leave a queue.
+
+## Auth — Dawn standard sign-in (for page ownership only)
+
+Queues are anonymous by design and stay that way: no sign-in to ask,
+vote, or host a queue. Sign-in exists for exactly one thing — **owning
+a private page name** — and it is the Dawn app-auth standard
+(`@dawn-studio/auth`), not a home-grown scheme:
+
+- Email → **one email carrying both** a sign-in button (magic link)
+  and a **6-digit code**; either credential burns the other, both are
+  single-use and expire in **15 minutes**; the code dies after **5
+  wrong tries**; sign-in emails are rate-limited to **3 per email per
+  10 minutes**.
+- The code is typed into the app itself, so sign-in works inside the
+  installed home-screen web app (whose cookie jar the email link,
+  opened in a browser, cannot reach). The link lands on `/auth/magic`,
+  which POSTs the token from JS so mail-scanner prefetch can't burn it.
+- Backend: `worker/` in this repo — a standalone Cloudflare Worker +
+  D1 (`openq-auth`), because this web app is hosted on Vercel. Sessions
+  are Bearer tokens the app persists and sends as
+  `Authorization: Bearer …` (no cross-origin cookies).
+- **No migration from the old Gun password accounts exists, honestly:**
+  those accounts were Gun keypairs with no email attached — there is
+  nothing to map from. Page names are claimed fresh by signed-in
+  users, first come first served.
 
 ## Event Q&A features
 
@@ -203,9 +228,3 @@ relay's container filesystem was ephemeral). To run your own:
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## Licence
-
-This software is licensed under the PolyForm Noncommercial License 1.0.0 - see [LICENSE](LICENSE).
-
-Commercial or business use of this software requires the prior written acknowledgement of Dawn Studio.

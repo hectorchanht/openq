@@ -1,5 +1,8 @@
 import Gun from 'gun/gun';
-import 'gun/sea';
+// NOTE: 'gun/sea' is deliberately NOT imported anymore — Gun user
+// accounts (username+password keypairs) were retired in favour of the
+// Dawn standard email sign-in (see src/libs/auth.js + worker/). The
+// graph itself is unchanged: queues, votes and pages are plain nodes.
 
 // Public community relays come and go; Gun's mesh syncs with whichever
 // peers are reachable, so list several and override with your own relays

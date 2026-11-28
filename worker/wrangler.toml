@@ -1,0 +1,17 @@
+name = "openq-auth"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# Auth backend for OpenQ (the web app itself is hosted on Vercel and
+# calls this worker cross-origin with Bearer sessions).
+# Deploy: wrangler deploy (after `wrangler d1 create openq-accounts`
+# and applying schema.sql; set RESEND_API_KEY as a secret).
+
+[[d1_databases]]
+binding = "ACCOUNTS_DB"
+database_name = "openq-accounts"
+database_id = "2e09037c-59e2-4606-bfa2-498aeaf50749"
+
+[vars]
+APP_ORIGIN = "https://openq.dawnstudio.app"
+APP_ORIGINS = "https://openq.dawnstudio.app,https://openq.hectorchan.com,http://localhost:3000"
